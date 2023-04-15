@@ -94,6 +94,18 @@ class PredicateFunctions:
             else:
                 arg_str = arg_str+","+arg
         return self.name+"("+ arg_str + ")"
+    
+    def getHashableString(self)->str:
+        arg_str = ""
+        for arg in deepcopy(self.arguments):
+            if(isVariable(arg)):
+                arg = 'var'
+            if arg_str == "":
+                arg_str = arg
+            else:
+                arg_str = arg_str+","+arg
+        return self.getPredicateName()+"("+ arg_str + ")"
+
 
 
 
@@ -478,6 +490,8 @@ predicate_sentence_hash = {}
 
 
 
+
+
 for i in range(2,kb_size+2):
     sentence = lines[i].rstrip("\n")
     #print("Before: "+sentence+"\n")
@@ -509,7 +523,7 @@ for i in range(2,kb_size+2):
         sentence.id = sentence_id
         sentence_id = sentence_id + 1
         for pred in predicate_array:
-            key = pred.getPredicateName()
+            key = pred.getHashableString()
             #print("Key: "+key)
             if( key in predicate_sentence_hash):
                 already_present_set = predicate_sentence_hash[key]
@@ -519,14 +533,16 @@ for i in range(2,kb_size+2):
                 newSet = set()
                 newSet.add(sentence.id)
                 predicate_sentence_hash[key] = newSet
+        for predicate in sentence.predicates:
+            print("Hash oda string ",predicate.getHashableString()+"\n")
         cleanKb.append(sentence)
 
 
     #print("After: "+str(simplified_cnf)+"\n")
 print("Clean KB : "+ str(cleanKb)+"\n")
-print("Unification : \n")
-print(resolveTwoSentences(cleanKb.sentences[0],cleanKb.sentences[1]))
-print("Unification Complete")
+#print("Unification : \n")
+#print(resolveTwoSentences(cleanKb.sentences[0],cleanKb.sentences[1]))
+#print("Unification Complete")
 
 #changeVariables(cleanKb.sentences[0],cleanKb.sentences[1])
 #print("Variable Set: "+changeVariables(cleanKb.sentences[0],cleanKb.sentences[1]))

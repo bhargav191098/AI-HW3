@@ -1,4 +1,4 @@
 Order(Jenny,Pizza)
 2
-L(A,B)|H(x,y)
+L(A,B)|H(Jonny,y)
 ~L(x,y)|~L(y,x)|H(x,y)
