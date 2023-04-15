@@ -1,0 +1,1 @@
+Initial Commit  - Has till resolution one step - but that whacky variable substitution is there.. so removing that in the next commit.
