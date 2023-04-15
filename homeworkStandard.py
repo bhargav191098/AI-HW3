@@ -152,6 +152,11 @@ class KB:
             else:
                 ret = ret + "\n" + str(sentence)
         return ret
+    
+cleanKb = KB([])
+counter = 0
+predicate_sentence_hash = {}
+
 
 def getAVariable(dictionary):
     for key in list(dictionary.keys()):
@@ -475,22 +480,67 @@ def convert_to_cnf(clause:str):
         #print("Inside else part " +str(ans_list))
     return ans_list
 
+def getSentenceObject(cnf_terms):
+    predicate_array = list()
+    for or_terms in cnf_terms:
+        #Here we convert into predicate objects.
+        negate = False
+        if "~" in or_terms:
+            negate = True
+        #Find predicate name.
+        function_name = or_terms.split("(")[0]
+        if(negate):
+            function_name = function_name[1:]
+        arguments = re.findall(r'\((.*?)\)', or_terms)[0]
+        arguments_separate = arguments.split(",")
+        #print(arguments_separate)
+        predicate_obj = PredicateFunctions(function_name,arguments_separate,negate)
+        #print(predicate_obj.name)
+        #print(predicate_obj.arguments)
+        #print(str(predicate_obj.negationSign))
+        print(str(predicate_obj))
+        predicate_array.append(predicate_obj)
+    sentence = Sentence(predicate_array)
+    global sentence_id
+    sentence.id = sentence_id
+    sentence_id = sentence_id + 1
+    for pred in predicate_array:
+        key = pred.getHashableString()
+        #print("Key: "+key)
+        if( key in predicate_sentence_hash):
+            already_present_set = predicate_sentence_hash[key]
+            already_present_set.add(sentence.id)
+            predicate_sentence_hash[key] = already_present_set
+        else:
+            newSet = set()
+            newSet.add(sentence.id)
+            predicate_sentence_hash[key] = newSet
+    for predicate in sentence.predicates:
+        print("Hash oda string ",predicate.getHashableString()+"\n")
+    return sentence
+
 f = open("input.txt")
 lines = f.readlines()
 query = lines[0].rstrip("\n")
+query_without_white_spaces = query.replace(" ","")
+if query_without_white_spaces[0]=="~":
+    negatedQuery = query_without_white_spaces.replace('~','',1)
+else:
+    negatedQuery = "~"+query_without_white_spaces
+
+query_cnf = convert_to_cnf(negatedQuery)
+simplified_cnf = simplify_terms(query_cnf)
+for simple_term in simplified_cnf:
+    query_sentence = getSentenceObject(simple_term)
+    print("Query Sentence : "+str(query_sentence))
+    cleanKb.append(query_sentence)
+
+
 #print(query)
 kb_size = int(lines[1].rstrip("\n"))
 #print(kb_size)
 
-
-kbWithoutParantheses = []
-cleanKb = KB([])
-counter = 0
-predicate_sentence_hash = {}
-
-
-
-
+sentence_id = 0
 
 for i in range(2,kb_size+2):
     sentence = lines[i].rstrip("\n")
@@ -499,46 +549,14 @@ for i in range(2,kb_size+2):
     cnf = convert_to_cnf(without_white_spaces)
     #print("After: "+ str(cnf)+"\n")
     simplified_cnf = simplify_terms(cnf)
-    for cnf_terms in simplified_cnf:
-        predicate_array = list()
-        for or_terms in cnf_terms:
-            #Here we convert into predicate objects.
-            negate = False
-            if "~" in or_terms:
-                negate = True
-            #Find predicate name.
-            function_name = or_terms.split("(")[0]
-            if(negate):
-                function_name = function_name[1:]
-            arguments = re.findall(r'\((.*?)\)', or_terms)[0]
-            arguments_separate = arguments.split(",")
-            #print(arguments_separate)
-            predicate_obj = PredicateFunctions(function_name,arguments_separate,negate)
-            #print(predicate_obj.name)
-            #print(predicate_obj.arguments)
-            #print(str(predicate_obj.negationSign))
-            print(str(predicate_obj))
-            predicate_array.append(predicate_obj)
-        sentence = Sentence(predicate_array)
-        sentence.id = sentence_id
-        sentence_id = sentence_id + 1
-        for pred in predicate_array:
-            key = pred.getHashableString()
-            #print("Key: "+key)
-            if( key in predicate_sentence_hash):
-                already_present_set = predicate_sentence_hash[key]
-                already_present_set.add(sentence.id)
-                predicate_sentence_hash[key] = already_present_set
-            else:
-                newSet = set()
-                newSet.add(sentence.id)
-                predicate_sentence_hash[key] = newSet
-        for predicate in sentence.predicates:
-            print("Hash oda string ",predicate.getHashableString()+"\n")
-        cleanKb.append(sentence)
-
-
+    for simplified_cnf_term in simplified_cnf:
+        sentence_obj = getSentenceObject(simplified_cnf_term)
+    cleanKb.append(sentence_obj)
+    #convertToSentenceFormAndAddToKB(simplified_cnf)
     #print("After: "+str(simplified_cnf)+"\n")
+
+
+
 print("Clean KB : "+ str(cleanKb)+"\n")
 #print("Unification : \n")
 #print(resolveTwoSentences(cleanKb.sentences[0],cleanKb.sentences[1]))
