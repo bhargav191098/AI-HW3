@@ -35,9 +35,10 @@ class PredicateFunctions:
         #self.arguments = args
         self.variable_present = False
         self.arguments = list()  
-        self.variable_list = dict()
-        
+        #self.variable_list = dict()
+        self.arguments = args
         #Is this code even necessary?
+        '''
         for i in range(len(args)):
             if(isVariable(args[i])):
                 variable = Variable(args[i])
@@ -50,7 +51,7 @@ class PredicateFunctions:
             else: #It must be a constant - is this the case??
                 constant = Constant(args[i])
                 self.arguments.append(args[i])
-
+        '''
         self.negationSign  = negation
 
     def __hash__(self) -> int:
@@ -99,11 +100,13 @@ class PredicateFunctions:
 class Sentence:
     def __init__(self,predicateList:list):
         self.predicates  = predicateList
+        '''
         self.variable_set = set()
         for predicate in predicateList:
             variable_list = predicate.variable_list
             for variable in variable_list.keys():
                 self.variable_set.add(variable)
+        '''
     def __hash__(self) -> int:
         return hash(self.predicates)
     
@@ -146,8 +149,20 @@ def getAVariable(dictionary):
 
 def changeVariables(sentence1,sentence2):
     print("Change variables\n")
-    variable_set_1 = sentence1.variable_set
-    variable_set_2 = sentence2.variable_set
+    
+    #variable_set_1 = sentence1.variable_set
+    #variable_set_2 = sentence2.variable_set
+    variable_set_1 = set()
+    variable_set_2 = set()
+    for pred in sentence1.predicates:
+        for arg in pred.arguments:
+            if(isVariable(arg)):
+                variable_set_1.add(arg)
+    
+    for pred in sentence2.predicates:
+        for arg in pred.arguments:
+            if(isVariable(arg)):
+                variable_set_2.add(arg)
 
     intersection_set = variable_set_1.intersection(variable_set_2)
     hash_dict = { ints: False for ints in range(26) }
@@ -163,9 +178,18 @@ def changeVariables(sentence1,sentence2):
     print("Common variables : "+str(intersection_set))
     new_second_sentence = deepcopy(sentence2)
     for common in intersection_set:
-        predicate_list = sentence2.predicates
+        #Takes one common variable at a time.
+        predicate_list = new_second_sentence.predicates
         safe_variable_number = getAVariable(hash_dict)
         safe_variable = chr(safe_variable_number + ord('a'))
+
+        for i in range(len(predicate_list)):
+            for j in range(0,len(predicate_list[i].arguments)):
+                if predicate_list[i].arguments[j] == common:
+                    predicate_list[i].arguments[j] = safe_variable
+        
+
+        '''
         for i in range(len(predicate_list)):
             if common in predicate_list[i].variable_list:
                 places = predicate_list[i].variable_list[common]
@@ -177,6 +201,7 @@ def changeVariables(sentence1,sentence2):
                 for place in places:
                     new_second_sentence.predicates[i].arguments[place] = safe_variable
                 new_second_sentence.predicates[i].variable_list[safe_variable] = places
+        '''
         hash_dict[safe_variable_number] = True
         print("After this change, sentence 2 is like: ",str(new_second_sentence))
         
@@ -236,19 +261,13 @@ def findSubstitution(sentence1,sentence2,substitution):
     print("After substitution : "+str(substitution))
     return substitution,sentence3
 
-
 def applySubstitution(substitution,sentence):
     replacement_sentence = deepcopy(sentence)
     print("sentence: "+str(replacement_sentence))
     for predicate in replacement_sentence.predicates:
         for i in range(len(predicate.arguments)):
             if(predicate.arguments[i] in substitution):
-                variable = predicate.arguments[i]
-                if(variable in predicate.variable_list):
-                    del predicate.variable_list[variable]
-                if(variable in sentence.variable_set):
-                    sentence.variable_set.remove(variable)
-                predicate.arguments[i] = substitution[variable]
+                predicate.arguments[i] = substitution[predicate.arguments[i]]
     return replacement_sentence
     print("Replacement Sentence : "+str(replacement_sentence))
 
