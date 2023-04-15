@@ -47,7 +47,7 @@ class PredicateFunctions:
                 else:
                     self.variable_list[variable.name] = [i]
                 self.variable_present = True
-            else: #It must be a constant - is this the case?
+            else: #It must be a constant - is this the case??
                 constant = Constant(args[i])
                 self.arguments.append(args[i])
 
